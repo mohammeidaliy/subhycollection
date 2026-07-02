@@ -105,7 +105,11 @@ async function fetchRelatedProducts(categoryId, excludeId) {
 // --- Rendering ---
 function getWhatsAppLink(product) {
     const num = settings.whatsapp_number || '';
-    const text = `Hi, I'm interested in ordering:\n\n*${product.name}*\nPrice: ${formatPrice(product.price)}\nSKU: ${product.sku}\n\n${window.location.origin}/product/${product.id}`;
+    const text = `🛍️ New Order Request
+Product: *${product.name}*
+Price: ${formatPrice(product.price)}
+SKU: ${product.sku}
+Please confirm availability.`;
     return `https://wa.me/${num}?text=${encodeURIComponent(text)}`;
 }
 
