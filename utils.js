@@ -60,7 +60,7 @@ const translations = {
 };
 
 let currentLang = localStorage.getItem('lang') || 'en';
-let currentCurrency = localStorage.getItem('currency') || 'USD';
+let currentCurrency = localStorage.getItem('currency') || 'TZS';
 let currentTheme = localStorage.getItem('theme') || 'light';
 
 function t(key) {
