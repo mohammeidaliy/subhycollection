@@ -40,6 +40,7 @@ async function logout() {
 
 // --- Pages ---
 function showLoginPage() {
+    loadAdminTheme();
     document.getElementById('admin-app').innerHTML = `
         <div class="login-page">
             <div class="login-card">
@@ -54,7 +55,12 @@ function showLoginPage() {
                         <label>Password</label>
                         <input type="password" id="login-password" required placeholder="••••••••">
                     </div>
-                    <button type="submit" class="admin-btn admin-btn-primary" style="margin-top:0.5rem;">Sign In</button>
+                    <button type="submit" class="admin-btn admin-btn-primary" style="margin-top:0.5rem;">
+                        Sign In
+                    </button>
+                    <a href="/" class="back-website-btn">
+                        ← Back to Website
+                    </a>
                 </form>
             </div>
         </div>
@@ -69,19 +75,24 @@ function handleLogin(e) {
 function showDashboard() {
     document.getElementById('admin-app').innerHTML = `
         <div class="admin-layout">
-            <aside class="sidebar" id="sidebar">
+            <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+                <aside class="sidebar" id="sidebar">
                 <div class="sidebar-logo">Subhy Collection</div>
-                <button class="sidebar-link active" onclick="showDashboard(); return false;">
+                <button class="sidebar-link active" onclick="setActiveSidebar(this);closeSidebar();showDashboard();return false;">
                     <span>◆</span> <span data-i18n="dashboard">${t('dashboard')}</span>
                 </button>
-                <button class="sidebar-link" onclick="showProductsPage(); return false;">
+                <button class="sidebar-link" onclick="setActiveSidebar(this);closeSidebar();showProductsPage();return false;">
                     <span>◈</span> <span data-i18n="products">${t('products')}</span>
                 </button>
-                <button class="sidebar-link" onclick="showCategoriesPage(); return false;">
+                <button class="sidebar-link" onclick="setActiveSidebar(this);closeSidebar();showCategoriesPage();return false;">
                     <span>◇</span> <span data-i18n="categories">${t('categories')}</span>
                 </button>
-                <button class="sidebar-link" onclick="showSettingsPage(); return false;">
+                <button class="sidebar-link" onclick="setActiveSidebar(this);closeSidebar();showSettingsPage();return false;">
                     <span>◉</span> <span data-i18n="settings">${t('settings')}</span>
+                </button>
+                <button class="sidebar-link" onclick="toggleAdminTheme()">
+                    <span>◐</span>
+                    <span id="theme-label">Dark Mode</span>
                 </button>
                 <div class="sidebar-divider"></div>
                 <button class="sidebar-link" onclick="logout(); return false;" style="color:var(--a-danger);">
@@ -91,7 +102,7 @@ function showDashboard() {
                     Subhy Collection Admin v1.0<br>Secure & Private
                 </div>
             </aside>
-            <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <main class="admin-main" id="admin-main">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -122,6 +133,7 @@ function showDashboard() {
             </main>
         </div>
     `;
+    loadAdminTheme();
     loadDashboardData();
 }
 
@@ -130,12 +142,14 @@ async function loadDashboardData() {
         supabaseClient.from('products').select('*', { count: 'exact', head: true }),
         supabaseClient.from('categories').select('*', { count: 'exact', head: true }),
         supabaseClient.from('products').select('*').lt('stock', 10),
-        supabaseClient.from('products').select('*').order('created_at', { ascending: false }).limit(5)
+        supabaseClient.from('products').select('*, categories(name)').order('created_at', { ascending: false }).limit(5)
     ]);
     
     document.getElementById('stat-products').textContent = prodCount || 0;
     document.getElementById('stat-categories').textContent = catCount || 0;
     document.getElementById('stat-lowstock').textContent = lowStock?.length || 0;
+
+    adminProducts = latest || [];
     
     const tbody = document.getElementById('latest-products');
     tbody.innerHTML = (latest || []).map(p => `
@@ -149,12 +163,19 @@ async function loadDashboardData() {
                     </div>
                 </div>
             </td>
-            <td class="product-meta-cell">${p.category_id ? 'Category' : '-'}</td>
+            <td class="product-meta-cell">
+                ${p.categories?.name || '-'}
+            </td>
             <td class="price-cell" data-price="${p.price}">${formatPrice(p.price)}</td>
             <td><span class="stock-cell ${p.stock < 10 ? 'low' : ''} ${p.stock <= 0 ? 'out' : ''}">${p.stock}</span></td>
             <td class="table-actions">
-                <button class="btn-icon" onclick="editProduct('${p.id}')">✎</button>
-                <button class="btn-icon btn-danger" onclick="deleteProduct('${p.id}')">✕</button>
+                <button class="action-btn action-edit" onclick="editProduct('${p.id}')">
+                    Edit
+                </button>
+
+                <button class="action-btn action-delete" onclick="deleteProduct('${p.id}')">
+                    Delete
+                </button>
             </td>
         </tr>
     `).join('');
@@ -214,9 +235,17 @@ async function loadProductsTable(page) {
                 ${p.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
             </td>
             <td class="table-actions">
-                <button class="btn-icon" onclick="editProduct('${p.id}')">✎</button>
-                <button class="btn-icon" onclick="duplicateProduct('${p.id}')">⎘</button>
-                <button class="btn-icon btn-danger" onclick="deleteProduct('${p.id}')">✕</button>
+                <button class="action-btn action-edit" onclick="editProduct('${p.id}')">
+                    Edit
+                </button>
+
+                <button class="action-btn action-copy" onclick="duplicateProduct('${p.id}')">
+                    Duplicate
+                </button>
+
+                <button class="action-btn action-delete" onclick="deleteProduct('${p.id}')">
+                    Delete
+                </button>
             </td>
         </tr>
     `).join('');
@@ -239,9 +268,15 @@ function renderAdminPagination(id, total, current, callback) {
 let editingProductId = null;
 let uploadedImages = [];
 
-function openProductModal(product = null) {
+async function openProductModal(product = null) {
     editingProductId = product?.id || null;
     uploadedImages = product?.gallery_images || [];
+
+    const { data } = await supabaseClient
+    .from("categories")
+    .select("*")
+    .order("name");
+    adminCategories = data || [];
     
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
@@ -461,8 +496,13 @@ async function loadCategoriesTable() {
             <td class="product-name-cell">${c.name}</td>
             <td class="product-meta-cell">${c.description || '-'}</td>
             <td class="table-actions">
-                <button class="btn-icon" onclick="editCategory('${c.id}')">✎</button>
-                <button class="btn-icon btn-danger" onclick="deleteCategory('${c.id}')">✕</button>
+                <button class="action-btn action-edit" onclick="editCategory('${c.id}')">
+                    Edit
+                </button>
+
+                <button class="action-btn action-delete" onclick="deleteCategory('${c.id}')">
+                    Delete
+                </button>
             </td>
         </tr>
     `).join('');
@@ -589,6 +629,66 @@ async function saveSettings(e) {
     }
 }
 
+// ==========================================
+// Admin Theme
+// ==========================================
+
+function setAdminTheme(theme) {
+    document.body.setAttribute("data-admin-theme", theme);
+    localStorage.setItem("admin-theme", theme);
+    const label = document.getElementById("theme-label");
+    if(label){
+        label.textContent =
+            theme === "dark"
+            ? "Light Mode"
+            : "Dark Mode";
+    }
+}
+
+function toggleAdminTheme(){
+
+    const current =
+        document.body.getAttribute("data-admin-theme") || "light";
+
+    const next =
+        current === "light"
+        ? "dark"
+        : "light";
+
+    setAdminTheme(next);
+}
+
+function loadAdminTheme(){
+    const saved =
+        localStorage.getItem("admin-theme") || "light";
+    setAdminTheme(saved);
+}
+function openSidebar() {
+    document.getElementById("sidebar").classList.add("open");
+    document.getElementById("sidebar-overlay").classList.add("show");
+}
+
+function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("sidebar-overlay").classList.remove("show");
+}
+
+function toggleSidebar(){
+    const sidebar = document.getElementById("sidebar");
+    if(sidebar.classList.contains("open")){
+        closeSidebar();
+    }else{
+        openSidebar();
+    }
+}
+function setActiveSidebar(button) {
+
+    document.querySelectorAll(".sidebar-link").forEach(link => {
+        link.classList.remove("active");
+    });
+
+    button.classList.add("active");
+}
 // --- Utils ---
 function closeModal() {
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());

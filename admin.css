@@ -4,26 +4,27 @@
    ========================================== */
 
 :root {
-    --a-bg: #0a0a0a;
-    --a-surface: #111111;
-    --a-surface-hover: #161616;
-    --a-surface-raised: #1a1a1a;
-    --a-border: #1f1f1f;
-    --a-border-light: #181818;
-    --a-text: #ededed;
-    --a-text-secondary: #8a8a8a;
-    --a-text-muted: #525252;
-    --a-primary: #ededed;
+    /* ========= DEFAULT LIGHT THEME ========= */
+    --a-bg: #f6f7fb;
+    --a-surface: #ffffff;
+    --a-surface-hover: #f3f4f6;
+    --a-surface-raised: #eceff3;
+    --a-border: #e5e7eb;
+    --a-border-light: #f1f5f9;
+    --a-text: #111827;
+    --a-text-secondary: #6b7280;
+    --a-text-muted: #9ca3af;
+    --a-primary: #111827;
     --a-accent: #c75b39;
     --a-accent-hover: #d4714f;
-    --a-success: #2d7d46;
-    --a-danger: #c2410c;
+    --a-success: #16a34a;
+    --a-danger: #dc2626;
     --a-warning: #d97706;
     --a-radius: 8px;
     --a-radius-sm: 6px;
     --a-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --a-font-display: 'Playfair Display', Georgia, serif;
-    --a-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    --a-transition: all .2s cubic-bezier(.16,1,.3,1);
 }
 
 /* ==========================================
@@ -454,7 +455,7 @@
     border-radius: var(--a-radius); 
     background: var(--a-bg); 
     color: var(--a-text); 
-    font-size: 0.875rem; 
+    font-size: 16px;
     transition: var(--a-transition);
     font-family: var(--a-font);
 }
@@ -719,3 +720,134 @@
 .admin-table tbody tr { animation: fadeIn 0.3s ease forwards; }
 .stat-card { animation: fadeIn 0.4s ease forwards; }
 
+/* ==========================================
+   DARK THEME
+========================================== */
+
+body[data-admin-theme="dark"]{
+    --a-bg:#0a0a0a;
+    --a-surface:#111111;
+    --a-surface-hover:#161616;
+    --a-surface-raised:#1a1a1a;
+    --a-border:#1f1f1f;
+    --a-border-light:#181818;
+    --a-text:#ededed;
+    --a-text-secondary:#8a8a8a;
+    --a-text-muted:#525252;
+    --a-primary:#ededed;
+    --a-success:#2d7d46;
+    --a-danger:#c2410c;
+    --a-warning:#d97706;
+}
+
+.sidebar-overlay{
+    display:none;
+}
+
+@media(max-width:768px){
+.sidebar-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    z-index:98;
+}
+.sidebar-overlay.show{
+    display:block;
+}
+}
+
+/* ===============================
+   Admin Action Buttons
+================================ */
+.table-actions {
+    display:flex;
+    gap:0.5rem;
+    align-items:center;
+    justify-content:flex-end;
+}
+
+.action-btn {
+    border:none;
+    padding:0.45rem 0.85rem;
+    border-radius:10px;
+    font-size:0.8rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s ease;
+    font-family:inherit;
+}
+
+.action-edit {
+    background:#f3f4f6;
+    color:#222;
+}
+
+.action-edit:hover {
+    background:#111;
+    color:white;
+}
+
+.action-copy {
+    background:#eef2ff;
+    color:#4338ca;
+}
+
+.action-copy:hover {
+    background:#4338ca;
+    color:white;
+}
+
+.action-delete {
+    background:#fee2e2;
+    color:#dc2626;
+}
+
+.action-delete:hover {
+    background:#dc2626;
+    color:white;
+}
+
+/* Mobile */
+@media(max-width:768px){
+    .table-actions {
+        flex-direction:column;
+        gap:0.35rem;
+        align-items:stretch;
+    }
+    .action-btn {
+        width:100%;
+        padding:0.55rem 0.7rem;
+        font-size:0.75rem;
+    }
+}
+
+@media(max-width:600px){
+    .admin-table .table-actions{
+        min-width:90px;
+    }
+    .admin-table .action-btn{
+        border-radius:8px;
+        padding:0.45rem;
+    }
+}
+
+/* Back to Website Button */
+.back-website-btn {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:1rem;
+    padding:0.75rem 1rem;
+    border-radius:12px;
+    border:1px solid var(--a-border, #e5e7eb);
+    color:var(--a-text, #333);
+    text-decoration:none;
+    font-size:0.9rem;
+    font-weight:600;
+    transition:all .25s ease;
+}
+.back-website-btn:hover {
+    background:#111;
+    color:white;
+    border-color:#111;
+}
