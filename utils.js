@@ -110,7 +110,7 @@ function updatePrices() {
 }
 
 // --- Image Compression ---
-async function compressImage(file, maxWidth = 1200, maxSizeKB = 250) {
+async function compressImage(file, maxWidth = 1200, maxSizeKB = 120) {
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
